@@ -66,11 +66,13 @@
   </div>
 
 <script>
-  // ✅ GitHub Pages에서 호출하려면 ngrok 주소로 해야 함
-  const API_BASE = "https://preantepenult-veta-gustoish.ngrok-free.dev";
+ const API_BASE = "https://preantepenult-veta-gustoish.ngrok-free.dev";
 
   const btn = document.getElementById("btn");
   const statusBox = document.getElementById("status");
+  const resultBox = document.getElementById("result");
+  const video = document.getElementById("video");
+  const download = document.getElementById("download");
 
   function setStatus(msg) {
     statusBox.style.display = "block";
@@ -78,8 +80,13 @@
   }
 
   btn.addEventListener("click", async () => {
-    const fileInput = document.getElementById("file");
-    const file = fileInput.files?.[0];
+    const file = document.getElementById("file").files?.[0];
+    const template = document.getElementById("template").value;
+    const storeName = document.getElementById("storeName").value.trim();
+
+    resultBox.style.display = "none";
+    video.src = "";
+    download.href = "#";
 
     if (!file) {
       setStatus("영상 파일을 먼저 선택해줘 형!");
@@ -87,28 +94,36 @@
     }
 
     btn.disabled = true;
-    setStatus("업로드 중...");
+    setStatus("릴스 생성 중... (30초 정도 걸릴 수 있어요)");
 
     try {
       const form = new FormData();
       form.append("video", file);
+      form.append("template", template);
+      form.append("storeName", storeName);
 
-      const res = await fetch(API_BASE + "/upload", {
+      const res = await fetch(API_BASE + "/make", {
         method: "POST",
-        body: form
+        body: form,
+        headers: {
+          // 결과 URL이 ngrok 기준으로 나오게(중요)
+          "x-public-base-url": API_BASE
+        }
       });
 
       const data = await res.json();
-
       if (!res.ok) {
-        setStatus("업로드 실패: " + (data.error || res.status));
+        setStatus("실패: " + (data.detail || data.error || res.status));
         return;
       }
 
-      setStatus("업로드 성공 ✅ 파일명: " + data.filename);
+      setStatus("완료 ✅ 아래에서 재생/다운로드 가능");
+      resultBox.style.display = "block";
+      video.src = data.outputUrl;
+      download.href = data.outputUrl;
     } catch (e) {
       console.error(e);
-      setStatus("업로드 실패(네트워크/CORS/ngrok 경고페이지 확인): " + e.message);
+      setStatus("네트워크/CORS/FFmpeg 문제: " + e.message);
     } finally {
       btn.disabled = false;
     }
