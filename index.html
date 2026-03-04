@@ -36,8 +36,10 @@
         <div>
           <label>템플릿</label>
           <select id="template">
-            <option value="basic">basic (기본)</option>
-            <option value="vet">vet (체험/미션)</option>
+            <option value="pet_mission">펫스테이션 미션(강추)</option>
+  <option value="pet_vet">주니어 수의학 아카데미</option>
+  <option value="pet_cute">오늘의 동물(귀여움)</option>
+  <option value="pet_review">체험 후기(리뷰)</option>
           </select>
         </div>
         <div>
@@ -125,6 +127,8 @@ const API_BASE = "https://preantepenult-veta-gustoish.ngrok-free.dev";
       btn.disabled = false;
     }
   });
+  form.append("template", document.getElementById("template").value);
+form.append("storeName", document.getElementById("storeName").value.trim());
 </script>
 
 
