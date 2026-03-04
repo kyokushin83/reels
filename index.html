@@ -100,7 +100,9 @@ const API_BASE = "https://preantepenult-veta-gustoish.ngrok-free.dev";
 
     try {
       const form = new FormData();
-      form.append("video", file);
+      const files = document.getElementById("file").files;
+for (const f of files) form.append("videos", f); // ✅ 필드명 videos
+form.append("template", document.getElementById("template").value);
 
       const res = await fetch(API_BASE + "/make", {
         method: "POST",
