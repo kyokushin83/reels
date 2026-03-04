@@ -66,99 +66,31 @@
   </div>
 
 <script>
-  // ✅ 여기만 형 서버 주소로 바꿔줘
-  // 예: "http://localhost:8080" 또는 "https://api.storereels.kr"
-  const API_BASE = "http://localhost:8080";
 
-  const $ = (id) => document.getElementById(id);
-  const btn = $("btn");
-  const statusBox = $("status");
-  const resultBox = $("result");
-  const video = $("video");
-  const download = $("download");
+const API_BASE = "https://api.storereels.kr"; // 나중에 실제 API 주소
 
-  function setStatus(msg) {
-    statusBox.style.display = "block";
-    statusBox.textContent = msg;
+document.getElementById("btn").addEventListener("click", async () => {
+
+  const statusBox = document.getElementById("status");
+  statusBox.style.display = "block";
+  statusBox.innerText = "API 연결 테스트 중...";
+
+  try {
+
+    const res = await fetch(API_BASE + "/test");
+
+    const data = await res.json();
+
+    statusBox.innerText = "API 응답 성공: " + data.message;
+
+  } catch (error) {
+
+    statusBox.innerText = "API 연결 실패";
+
   }
 
-  function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+});
 
-  async function createReel(file, template, storeName) {
-    const form = new FormData();
-    form.append("video", file);
-    form.append("template", template);
-    if (storeName) form.append("storeName", storeName);
-
-    const res = await fetch(`${API_BASE}/api/reels`, {
-      method: "POST",
-      body: form
-    });
-
-    if (!res.ok) {
-      const t = await res.text().catch(() => "");
-      throw new Error(`업로드 실패: ${res.status} ${t}`);
-    }
-    return await res.json(); // { id, status }
-  }
-
-  async function getJob(id) {
-    const res = await fetch(`${API_BASE}/api/reels/${id}`);
-    if (!res.ok) throw new Error("상태 조회 실패");
-    return await res.json();
-  }
-
-  btn.addEventListener("click", async () => {
-    const file = $("file").files?.[0];
-    const template = $("template").value;
-    const storeName = $("storeName").value.trim();
-
-    resultBox.style.display = "none";
-    video.src = "";
-    download.href = "#";
-
-    if (!file) {
-      alert("영상 파일을 선택해줘 형!");
-      return;
-    }
-
-    btn.disabled = true;
-
-    try {
-      setStatus("업로드 중...");
-      const created = await createReel(file, template, storeName);
-      const id = created.id;
-      setStatus(`작업 생성됨: ${id}\n편집 중...`);
-
-      // ✅ 폴링(2초마다) — MVP에 제일 쉬움
-      for (let i = 0; i < 90; i++) { // 최대 3분
-        await sleep(2000);
-        const job = await getJob(id);
-
-        if (job.status === "processing") {
-          setStatus(`편집 중... (${i+1})\n작업ID: ${id}`);
-        } else if (job.status === "done") {
-          setStatus("완료! 아래에서 재생/다운로드 가능");
-          resultBox.style.display = "block";
-          video.src = job.outputUrl;
-          download.href = job.outputUrl;
-          return;
-        } else if (job.status === "failed") {
-          setStatus(`실패: ${job.error || "unknown"}`);
-          return;
-        } else {
-          setStatus(`대기/진행 상태: ${job.status}\n작업ID: ${id}`);
-        }
-      }
-
-      setStatus("시간 초과: 서버에서 아직 처리 중일 수 있어요. 잠시 후 다시 조회해줘.");
-    } catch (e) {
-      console.error(e);
-      setStatus(e.message || "에러 발생");
-    } finally {
-      btn.disabled = false;
-    }
-  });
 </script>
 </body>
 </html>
